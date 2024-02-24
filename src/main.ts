@@ -6,12 +6,14 @@ import simulationShader from "./simulationShader.wgsl?raw";
 const canvas = document.querySelector("canvas");
 
 const PARTICLE_COUNT = 60;
-const FPS = 20;
-const UPDATE_INTERVAL = 1000 / FPS;
+// const FPS = 60;
+// const UPDATE_INTERVAL = 1000 / FPS;
 let step = 0;
 const WORKGROUP_COUNT = 1;
 
 if (!canvas) throw new Error("No canvas");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 const nav = navigator as any;
 if (!nav.gpu) {
   throw new Error("WebGPU not supported");
@@ -52,14 +54,6 @@ const vertexBuffer = device.createBuffer({
 });
 device.queue.writeBuffer(vertexBuffer, 0, vertices);
 
-// const uniformArray = new Float32Array([GRID_SIZE, GRID_SIZE]);
-// const uniformBuffer = device.createBuffer({
-//   label: "grid uniforms",
-//   size: uniformArray.byteLength,
-//   usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-// });
-// device.queue.writeBuffer(uniformBuffer, 0, uniformArray);
-
 const particleArray = new Float32Array(PARTICLE_COUNT * 4);
 
 particleArray.forEach((_value, index, array) => {
@@ -83,6 +77,12 @@ const canvasDimensionsBuffer = device.createBuffer({
 console.log("dimensions:", canvasDimensionsBuffer);
 
 device.queue.writeBuffer(canvasDimensionsBuffer, 0, canvasDimensionsArray);
+
+const deltaTimeBuffer = device.createBuffer({
+  label: "deltaTime buffer",
+  size: 4,
+  usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+});
 
 const vertexBufferLayout: GPUVertexBufferLayout = {
   arrayStride: 8,
@@ -162,6 +162,10 @@ const bindGroup = device.createBindGroup({
       binding: 1,
       resource: { buffer: canvasDimensionsBuffer },
     },
+    {
+      binding: 2,
+      resource: { buffer: deltaTimeBuffer },
+    },
   ],
 });
 
@@ -182,6 +186,7 @@ function updateSimulation() {
   const currentFrameTime = performance.now();
   const deltaTime = currentFrameTime - lastFrameTime;
   lastFrameTime = currentFrameTime;
+  // console.log(deltaTime);
   device.queue.writeBuffer(deltaTimeBuffer, 0, new Float32Array([deltaTime]));
 
   const computePass = encoder.beginComputePass();
@@ -212,8 +217,10 @@ function updateSimulation() {
   pass.draw(vertices.length / 2, 1);
   pass.end();
   device.queue.submit([encoder.finish()]);
+  requestAnimationFrame(updateSimulation);
 }
 
-setInterval(updateSimulation, UPDATE_INTERVAL);
+// setInterval(updateSimulation, UPDATE_INTERVAL);
+requestAnimationFrame(updateSimulation);
 
 export {};
