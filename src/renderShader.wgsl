@@ -1,6 +1,5 @@
 @group(0) @binding(0) var<storage, read_write> particles: array<ParticleData>;
 @group(0) @binding(1) var<uniform> canvasDimensions: vec2<u32>;
-//@group(0) @binding(2) var<uniform> dt: f32;
 
 
 @vertex
@@ -28,8 +27,6 @@ fn fragmentMain(@builtin(position) pos: vec4f) -> @location(0) vec4f {
 	fragPos.x *= aspect;
 	fragPos.y = 1-fragPos.y;
 
-//	return vec4f(fragPos, 0, 1);
-
 	let ballSize = 0.05;
 	let borderSmooth = 0.002;
 
@@ -41,8 +38,6 @@ fn fragmentMain(@builtin(position) pos: vec4f) -> @location(0) vec4f {
 		color = min(color, val);
 	}
 
-
-
-
-    return vec4f(color, color, color, 1);
+    return vec4f(max(fragPos.x, 1-color), max(fragPos.y, 1-color), 1-color, 1);
+//    return vec4f(color, color, color, 1);
 }

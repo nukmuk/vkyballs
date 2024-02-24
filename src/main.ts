@@ -60,7 +60,13 @@ device.queue.writeBuffer(vertexBuffer, 0, vertices);
 const particleArray = new Float32Array(PARTICLE_COUNT * 4);
 
 particleArray.forEach((_value, index, array) => {
-  array[index] = Math.random();
+  const type = index % 4;
+  if (type < 2) {
+    array[index] = Math.random();
+    if (type == 0) array[index] -= 0.5;
+  } else {
+    array[index] = Math.random() - 0.5;
+  }
 });
 
 const particleStorage = device.createBuffer({
@@ -123,7 +129,7 @@ const bindGroupLayout = device.createBindGroupLayout({
     },
     {
       binding: 1,
-      visibility: GPUShaderStage.FRAGMENT,
+      visibility: GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE,
       buffer: { type: "uniform" },
     },
     {
