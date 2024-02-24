@@ -17,11 +17,18 @@ struct ParticleData {
 fn fragmentMain(@builtin(position) pos: vec4f) -> @location(0) vec4f {
 
 	let scale = 1.0;
-	let aspect = f32(canvasDimensions.x / canvasDimensions.y);
+	let aspect = f32(canvasDimensions.x) / f32(canvasDimensions.y);
 	let dim = vec2f(canvasDimensions);
 	let cameraXShift = 0.0;
-	var fragPos = pos.xy / 100;
-//	var fragPos = vec2f((pos.x/dim.x + cameraXShift), 1-pos.y/dim.y) * scale;
+
+	// transform fragPos
+	var fragPos = pos.xy;
+	fragPos.x -= dim.x/2;
+	fragPos /= dim;
+	fragPos.x *= aspect;
+	fragPos.y = 1-fragPos.y;
+
+//	return vec4f(fragPos, 0, 1);
 
 	let ballSize = 0.05;
 	let borderSmooth = 0.002;

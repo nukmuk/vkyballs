@@ -3,7 +3,13 @@
 import renderShader from "./renderShader.wgsl?raw";
 import simulationShader from "./simulationShader.wgsl?raw";
 
-const canvas = document.querySelector("canvas");
+const canvas = getCanvas();
+
+function getCanvas(): HTMLCanvasElement {
+  const canvas = document.querySelector("canvas");
+  if (!canvas) throw new Error("No canvas element found");
+  return canvas;
+}
 
 const PARTICLE_COUNT = 60;
 // const FPS = 60;
@@ -11,9 +17,6 @@ const PARTICLE_COUNT = 60;
 let step = 0;
 const WORKGROUP_COUNT = 1;
 
-if (!canvas) throw new Error("No canvas");
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
 const nav = navigator as any;
 if (!nav.gpu) {
   throw new Error("WebGPU not supported");
@@ -68,15 +71,20 @@ const particleStorage = device.createBuffer({
 
 device.queue.writeBuffer(particleStorage, 0, particleArray);
 
-const canvasDimensionsArray = new Uint32Array([canvas.width, canvas.height]);
+let canvasDimensionsArray = new Uint32Array([canvas.width, canvas.height]);
 const canvasDimensionsBuffer = device.createBuffer({
   label: "Canvas Dimensions Array",
   size: canvasDimensionsArray.byteLength,
   usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
 });
-console.log("dimensions:", canvasDimensionsBuffer);
-
-device.queue.writeBuffer(canvasDimensionsBuffer, 0, canvasDimensionsArray);
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  canvasDimensionsArray = new Uint32Array([canvas.width, canvas.height]);
+  device.queue.writeBuffer(canvasDimensionsBuffer, 0, canvasDimensionsArray);
+}
+resizeCanvas();
+window.addEventListener("resize", resizeCanvas);
 
 const deltaTimeBuffer = device.createBuffer({
   label: "deltaTime buffer",

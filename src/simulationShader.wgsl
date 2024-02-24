@@ -8,19 +8,21 @@ struct ParticleData {
 
 const g = -9.81;
 const particleSize = 0.05;
+const damp = 0.9;
 
 @compute
 @workgroup_size(1)
 fn computeMain() {
 	let dt = deltaTime / 1000;
 	for (var i = 0u; i < arrayLength(&particles); i++) {
-		particles[i].pos += particles[i].vel * dt;
-		particles[i].vel.y += g * dt;
 
 		if (particles[i].pos.y < 0.0 + particleSize) {
-			particles[i].vel.y *= -1.1;
-			particles[i].pos.y = 0.0;
+			particles[i].vel.y *= -1 * damp;
+			particles[i].pos.y = 0.0 + particleSize;
 		}
+
+		particles[i].pos += particles[i].vel * dt;
+		particles[i].vel.y += g * dt;
 	}
 
 }
