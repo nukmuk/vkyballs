@@ -11,11 +11,11 @@ function getCanvas(): HTMLCanvasElement {
   return canvas;
 }
 
-const PARTICLE_COUNT = 30;
+const PARTICLE_COUNT = 512;
 // const FPS = 60;
 // const UPDATE_INTERVAL = 1000 / FPS;
 let step = 0;
-const WORKGROUP_COUNT = 1;
+const WORKGROUP_COUNT = 8;
 
 const nav = navigator as any;
 if (!nav.gpu) {

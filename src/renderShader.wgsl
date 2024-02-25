@@ -48,7 +48,7 @@ fn fragmentMain(@builtin(position) pos: vec4f) -> @location(0) vec4f {
 	//
 
 
-	let ballSize = 0.05;
+	let ballSize = 0.02;
 	let borderSmooth = 0.001;
 
 	var color = 1.0;
@@ -60,5 +60,6 @@ fn fragmentMain(@builtin(position) pos: vec4f) -> @location(0) vec4f {
 	}
 //	return vec4f(fract(fragPos*1), 0, 1);
 //    return vec4f(max(fragPos.x, 1-color), max(fragPos.y, 1-color), 1-color, 1);
-    return vec4f(color, color, color, 1);
+    return vec4f(1-color);
+//    return vec4f(max(color, fract(fragPos.x)), max(color, fract(fragPos.y)), color, 1);
 }
