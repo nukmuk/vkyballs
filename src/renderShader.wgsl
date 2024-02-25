@@ -28,7 +28,7 @@ fn fragmentMain(@builtin(position) pos: vec4f) -> @location(0) vec4f {
 	fragPos.y = 1-fragPos.y;
 
 	let ballSize = 0.05;
-	let borderSmooth = 0.002;
+	let borderSmooth = 0.001;
 
 	var color = 1.0;
 
