@@ -59,6 +59,6 @@ fn fragmentMain(@builtin(position) pos: vec4f) -> @location(0) vec4f {
 		color = min(color, val);
 	}
 //	return vec4f(fract(fragPos*1), 0, 1);
-    return fract(vec4f(max(fragPos.x, 1-color), max(fragPos.y, 1-color), 1-color, 1));
-//    return vec4f(color, color, color, 1);
+//    return vec4f(max(fragPos.x, 1-color), max(fragPos.y, 1-color), 1-color, 1);
+    return vec4f(color, color, color, 1);
 }
