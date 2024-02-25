@@ -11,7 +11,7 @@ function getCanvas(): HTMLCanvasElement {
   return canvas;
 }
 
-const PARTICLE_COUNT = 10;
+const PARTICLE_COUNT = 30;
 // const FPS = 60;
 // const UPDATE_INTERVAL = 1000 / FPS;
 let step = 0;
@@ -77,17 +77,24 @@ const particleStorage = device.createBuffer({
 
 device.queue.writeBuffer(particleStorage, 0, particleArray);
 
-let canvasDimensionsArray = new Uint32Array([canvas.width, canvas.height]);
-const canvasDimensionsBuffer = device.createBuffer({
+let canvasPositionArray = new Float32Array([
+  canvas.width,
+  canvas.height,
+  window.screenX,
+  window.screenY,
+  window.screen.width,
+  window.screen.height,
+]);
+const canvasPositionBuffer = device.createBuffer({
   label: "Canvas Dimensions Array",
-  size: canvasDimensionsArray.byteLength,
+  size: canvasPositionArray.byteLength,
   usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
 });
 function resizeCanvas() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
-  canvasDimensionsArray = new Uint32Array([canvas.width, canvas.height]);
-  device.queue.writeBuffer(canvasDimensionsBuffer, 0, canvasDimensionsArray);
+  canvasPositionArray[0] = canvas.width;
+  canvasPositionArray[1] = canvas.height;
 }
 resizeCanvas();
 window.addEventListener("resize", resizeCanvas);
@@ -174,7 +181,7 @@ const bindGroup = device.createBindGroup({
     },
     {
       binding: 1,
-      resource: { buffer: canvasDimensionsBuffer },
+      resource: { buffer: canvasPositionBuffer },
     },
     {
       binding: 2,
@@ -194,6 +201,10 @@ const simulationPipeline = device.createComputePipeline({
 
 let lastFrameTime = performance.now();
 function updateSimulation() {
+  canvasPositionArray[2] = window.screenX;
+  canvasPositionArray[3] = window.screenY;
+  device.queue.writeBuffer(canvasPositionBuffer, 0, canvasPositionArray);
+
   if (!context) throw new Error("No context");
   const encoder = device.createCommandEncoder();
 
