@@ -10,19 +10,19 @@ struct CanvasData {
 
 struct ParticleData {
 	pos: vec2f,
-//	posOld: vec2f,
-	vel: vec2f,
+	posOld: vec2f,
+	acc: vec2f,
 }
 
-const g = -9.81 * 0.0;
+const g = -9.81 * 1.0;
 const particleSize = 0.02;
-const damp = 0.8;
+const friction = 0.97;
 const mass = 1.0;
-const substeps = 4;
+const substeps = 1;
 //const bounceCoef = 100*substeps;
 
 @compute
-@workgroup_size(8, 8)
+@workgroup_size(64)
 fn computeMain(
 	@builtin(workgroup_id) workgroup_id: vec3<u32>,
 	@builtin(num_workgroups) num_workgroups: vec3<u32>,
@@ -37,7 +37,7 @@ fn computeMain(
 
 	let global_invocation_index = workgroup_index * 64 + local_invocation_index;
 
-	if global_invocation_index > arrayLength(&particles) - 1 { return; }
+	if global_invocation_index > arrayLength(&particles) - 1 { return ; }
 
 	let dt = deltaTime / 1000;
 	updateSimSubsteps(dt, substeps, global_invocation_index);
@@ -50,8 +50,6 @@ fn updateSimSubsteps(dt: f32, substeps: u32, inv: u32) {
 }
 
 fn updateSim(dt: f32, inv: u32) {
-
-	let bounceCoef = 1000 * f32(substeps) / f32(arrayLength(&particles));
 
 	let screenAspect = canvas.screenSize.x / canvas.screenSize.y;
 	let canvasSizeNormalized = vec2f(canvas.size.x / canvas.screenSize.x * screenAspect, canvas.size.y / canvas.screenSize.y);
@@ -66,45 +64,51 @@ fn updateSim(dt: f32, inv: u32) {
 
 //	for (var i = 0u; i < arrayLength(&particles); i++) {
 
+		particles[i].acc.y += g;
+
+		let vel = (particles[i].pos - particles[i].posOld) * friction;
+		particles[i].posOld = particles[i].pos;
+
+
 		if particles[i].pos.y < floor + particleSize {
-			particles[i].vel.y *= -1 * damp;
+//			vel.y *= -1 * damp;
 			particles[i].pos.y = floor + particleSize;
 		}
 
 		if particles[i].pos.y > ceiling - particleSize {
-			particles[i].vel.y *= -1 * damp;
+//			vel.y *= -1 * damp;
 			particles[i].pos.y = ceiling - particleSize;
 		}
 
 		if particles[i].pos.x < lWall + particleSize {
-			particles[i].vel.x *= -1 * damp;
+//			vel.x *= -1 * damp;
 			particles[i].pos.x = lWall + particleSize;
 		}
 
 		if particles[i].pos.x > rWall - particleSize {
-			particles[i].vel.x *= -1 * damp;
+//			vel.x *= -1 * damp;
 			particles[i].pos.x = rWall - particleSize;
 		}
-
 		for (var j = i + 1; j < arrayLength(&particles); j++) {
 			let pos1 = particles[i].pos;
 			let pos2 = particles[j].pos;
-			let dst = distance(pos1, pos2);
+			var dst = distance(pos1, pos2);
 
 			if (dst < particleSize * 2) {
 				var amountToMove = particleSize*2 - dst;
 				let colAxis = pos2 - pos1;
 
-				particles[i].pos += -colAxis * amountToMove;
-				particles[j].pos += colAxis * amountToMove;
+				if dst == 0.0 { dst = 0.01; } // don't divide by 0
 
-				particles[i].vel += -colAxis * amountToMove*bounceCoef;
-				particles[j].vel += colAxis * amountToMove*bounceCoef;
+				particles[i].pos += -colAxis/dst * amountToMove;
+				particles[j].pos += colAxis/dst * amountToMove;
 
+//				vel += -colAxis * amountToMove*bounceCoef;
 			}
 		}
 
-		particles[i].vel.y += g * dt;
-		particles[i].pos += particles[i].vel * dt;
+//		vel.y += g * dt;
+		particles[i].pos += vel + particles[i].acc * dt * dt;
+		particles[i].acc = vec2f(0,0);
 //	}
 }

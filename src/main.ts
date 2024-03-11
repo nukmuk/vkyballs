@@ -11,11 +11,12 @@ function getCanvas(): HTMLCanvasElement {
   return canvas;
 }
 
-const PARTICLE_COUNT = 512;
+const PARTICLE_COUNT = 128;
 // const FPS = 60;
 // const UPDATE_INTERVAL = 1000 / FPS;
 let step = 0;
-const WORKGROUP_COUNT = 8;
+const WORKGROUP_SIZE = 64;
+const WORKGROUP_COUNT = Math.ceil(PARTICLE_COUNT / WORKGROUP_SIZE);
 
 const nav = navigator as any;
 if (!nav.gpu) {
@@ -57,17 +58,17 @@ const vertexBuffer = device.createBuffer({
 });
 device.queue.writeBuffer(vertexBuffer, 0, vertices);
 
-const particleArray = new Float32Array(PARTICLE_COUNT * 4);
+const particleArray = new Float32Array(PARTICLE_COUNT * 6);
 
-particleArray.forEach((_value, index, array) => {
-  const type = index % 4;
-  if (type < 2) {
-    array[index] = Math.random();
-    if (type == 0) array[index] -= 0.5;
-  } else {
-    array[index] = Math.random() - 0.5;
-  }
-});
+for (let i = 0; i < PARTICLE_COUNT; i++) {
+  const index = i * 6;
+  const x = Math.random();
+  const y = Math.random();
+  particleArray[index] = x;
+  particleArray[index + 1] = y;
+  particleArray[index + 2] = x;
+  particleArray[index + 3] = y;
+}
 
 const particleStorage = device.createBuffer({
   label: "Particles State Array",
